@@ -11,9 +11,11 @@ import re
 
 STOPWORD_WEIGHT = 'bi'
 
+
 class DataCore(object):
     
-    def __init__(self, text, stopword_set, windowsSize, n, tagsToDiscard = set(['u', 'd']), exclude = set(string.punctuation)):
+    # Edit Adding LOOKUP
+    def __init__(self, text, stopword_set, windowsSize, n, tagsToDiscard = set(['u', 'd']), exclude = set(string.punctuation), LOOKUP = dict()):
         self.number_of_sentences = 0
         self.number_of_words = 0
         self.terms = {}
@@ -28,6 +30,9 @@ class DataCore(object):
             self.freq_ns[i+1] = 0.
         self.stopword_set = stopword_set
         self._build(text, windowsSize, n)
+
+        # Edit
+        self.LOOKUP = LOOKUP
 
     def build_candidate(self, candidate_string):
         sentences_str = [w for w in split_contractions(web_tokenizer(candidate_string.lower())) if not (w.startswith("'") and len(w) > 1) and len(w) > 0]
@@ -113,7 +118,7 @@ class DataCore(object):
         list(map(lambda x: x.updateH(maxTF=maxTF, avgTF=avgTF, stdTF=stdTF, number_of_sentences=self.number_of_sentences, features=features), self.terms.values()))
 
     def build_mult_terms_features(self, features=None):
-        list(map(lambda x: x.updateH(features=features), [cand for cand in self.candidates.values() if cand.isValid()]))
+        list(map(lambda x: x.updateH(features=features, LOOKUP = self.LOOKUP), [cand for cand in self.candidates.values() if cand.isValid()]))
 
     def pre_filter(self, text):
         prog = re.compile("^(\\s*([A-Z]))")
@@ -266,11 +271,17 @@ class composed_word(object):
 
         return (features_cand, columns, seen)
 
-    def updateH(self, features=None, isVirtual=False):
+    def updateH(self, features=None, isVirtual=False, LOOKUP = dict()):
         sum_H  = 0.
         prod_H = 1.
 
         for (t, term_base) in enumerate(self.terms):
+    
+            # Edit
+            if(LOOKUP.get(term_base.unique_term,None) in {"NOUN","PROPN"}):
+                sum_H += 2
+            # Edit end
+
             if not term_base.stopword:
                 sum_H += term_base.H
                 prod_H *= term_base.H
