@@ -5,11 +5,11 @@
 import string
 import os
 import jellyfish
-from Levenshtein import Levenshtein
+from .Levenshtein import Levenshtein
 
-from utils import get_pos_tag, satisfied
+from .utils import get_pos_tag, satisfied
 
-from datarepresentation import DataCore
+from .datarepresentation import DataCore
 
 class KeywordExtractor(object):
 
